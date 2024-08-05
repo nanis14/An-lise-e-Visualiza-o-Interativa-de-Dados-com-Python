@@ -1,0 +1,23 @@
+Este projeto oferece uma abordagem abrangente para a análise e visualização de dados utilizando Python e suas bibliotecas poderosas como Pandas, Matplotlib, Seaborn, Plotly e outras. Ele inclui funções para carregar dados de fontes como Google Drive, identificar variáveis numéricas e categóricas, e criar visualizações interativas e informativas.
+
+As principais funcionalidades do projeto incluem:
+
+Carregamento de Dados:
+Função para carregar dados de um arquivo CSV a partir de uma URL, incluindo arquivos hospedados no Google Drive.
+
+Identificação de Variáveis:
+Funções para listar variáveis numéricas e categóricas no conjunto de dados.
+
+Visualizações 3D:
+Criação de gráficos de dispersão 3D para explorar relações entre três variáveis numéricas.
+
+Gráficos Interativos:
+Geração de gráficos de barras interativos para as principais categorias de uma variável categórica, e mapas interativos que mostram dados numéricos por país.
+
+Relatórios Automáticos:
+Geração de relatórios automáticos que descrevem as visualizações e destacam insights importantes.
+
+Visão Geral Completa:¶
+Criação de gráficos de barras empilhadas para uma visão geral das variáveis principais relacionadas a resíduos plásticos por país.
+
+Este projeto é ideal para quem deseja explorar e entender grandes conjuntos de dados, revelando padrões e correlações ocultas por meio de visualizações detalhadas e interativas.
