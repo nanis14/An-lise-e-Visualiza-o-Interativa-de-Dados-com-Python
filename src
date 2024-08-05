@@ -1,0 +1,184 @@
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+import requests
+from io import StringIO
+import random
+from mpl_toolkits.mplot3d import Axes3D
+import plotly.express as px
+import plotly.graph_objects as go
+
+def carregar_dados(url):
+    try:
+        if 'drive.google.com' in url:
+            file_id = url.split('/')[-2]
+            download_url = f"https://drive.google.com/uc?id={file_id}"
+            response = requests.get(download_url).content
+            df = pd.read_csv(StringIO(response.decode('utf-8')))
+        else:
+            df = pd.read_csv(url)
+        
+        # Verificar as colunas disponíveis no conjunto de dados
+        print("Colunas disponíveis no conjunto de dados:")
+        print(df.columns)
+        
+        return df
+    except Exception as e:
+        print(f"Erro ao carregar os dados: {e}")
+        return None
+
+def listar_variaveis_numericas(df):
+    numeric_columns = df.select_dtypes(include=['float64', 'int64']).columns
+    return numeric_columns
+
+def listar_variaveis_categoricas(df):
+    categorical_columns = df.select_dtypes(include=['object']).columns
+    return categorical_columns
+
+def plot_grafico_de_dispersao_3d(df, cols):
+    fig = plt.figure(figsize=(10, 7))
+    ax = fig.add_subplot(111, projection='3d')
+    scatter = ax.scatter(df[cols[0]], df[cols[1]], df[cols[2]], c='b', marker='o', s=50, alpha=0.6)
+    ax.set_title('Gráfico de Dispersão 3D', fontsize=12)
+    ax.set_xlabel(cols[0], fontsize=8)
+    ax.set_ylabel(cols[1], fontsize=8)
+    ax.set_zlabel(cols[2], fontsize=8)
+    ax.tick_params(axis='both', which='major', labelsize=8)
+    ax.view_init(elev=20., azim=30)
+    plt.show()
+
+def gerar_relatorio_dispersao(df, cols):
+    print("\nRelatório do Gráfico de Dispersão 3D:")
+    print(f"Este gráfico de dispersão 3D exibe a relação entre três variáveis numéricas do conjunto de dados: {cols[0]}, {cols[1]}, e {cols[2]}.")
+    print(f"A visualização em 3D permite observar como essas três variáveis se comportam em conjunto, o que pode revelar padrões e correlações não visíveis em gráficos 2D.")
+    print(f"Por exemplo, pontos que formam uma superfície ou agrupamentos específicos podem indicar relações importantes entre as variáveis.")
+
+def plot_grafico_de_barras_interativo(df, col_categorica, col_numerica):
+    top_20_categories = df[col_categorica].value_counts().head(20).index
+    df_top_20 = df[df[col_categorica].isin(top_20_categories)]
+    
+    # Criar figura manualmente para definir a cor das barras
+    fig = go.Figure(data=[
+        go.Bar(x=df_top_20[col_categorica], y=df_top_20[col_numerica], 
+               marker_color='lightpink')  # Definir cor rosa claro
+    ])
+    
+    fig.update_layout(
+        title=f'Gráfico de Barras Interativo para as 20 principais categorias de {col_categorica}',
+        xaxis_title=col_categorica,
+        yaxis_title=col_numerica,
+        height=700,  # Ajuste da altura
+        width=1200,  # Ajuste da largura
+        xaxis_tickangle=-45,
+        title_font_size=20,
+        xaxis_title_font_size=15,
+        yaxis_title_font_size=15,
+        xaxis=dict(
+            tickfont=dict(size=8),  # Diminuir o tamanho das etiquetas
+            title_standoff=60  # Ajustar a distância do título do eixo x
+        )
+    )
+    
+    # Adicionar relatório no gráfico
+    relatorio = f"O gráfico de barras acima mostra a distribuição da variável {col_numerica} em relação às 20 principais categorias da variável {col_categorica}."
+    fig.add_annotation(text=relatorio,
+                       xref="paper", yref="paper",
+                       x=0.5, y=-0.4, showarrow=False,
+                       font=dict(size=10),
+                       align="center",
+                       bordercolor='black', 
+                       borderwidth=1)
+    
+    fig.show()
+
+def gerar_mapa_interativo(df, col_numerica):
+    fig = px.choropleth(df, 
+                        locations='Country',
+                        locationmode='country names',
+                        color=col_numerica,
+                        hover_name='Country',
+                        hover_data=[col_numerica],
+                        color_continuous_scale='Viridis',
+                        labels={col_numerica: col_numerica}
+                       )
+    
+    fig.update_layout(title_text=f'Mapa Interativo de {col_numerica}',
+                      geo=dict(showframe=False, 
+                               showcoastlines=False, 
+                               projection_type='equirectangular'
+                              ),
+                      height=800,  # Ajuste de altura
+                      width=1200   # Ajuste de largura
+                     )
+    
+    fig.show()
+
+def gerar_relatorio_mapa(col_numerica):
+    print(f"\nRelatório do Mapa Interativo de {col_numerica}:")
+    print(f"Este mapa interativo mostra a variável {col_numerica} para diferentes países.")
+    print(f"Você pode passar o mouse sobre cada país para ver o valor exato de {col_numerica}.")
+    print(f"As cores mais escuras indicam um valor maior de {col_numerica}, enquanto as cores mais claras indicam um valor menor.")
+
+def plot_grafico_completo(df):
+    # Selecionar apenas as colunas disponíveis
+    df_plot = df[['Country', 
+                  'Total_MismanagedPlasticWaste_2010 (millionT)',
+                  'Total_MismanagedPlasticWaste_2019 (millionT)']]
+    
+    # Plotar gráfico de barras empilhadas com Plotly
+    fig = go.Figure()
+    for col in df_plot.columns[1:]:
+        fig.add_trace(go.Bar(name=col, x=df_plot['Country'], y=df_plot[col]))
+    
+    fig.update_layout(barmode='stack',
+                      title='Visão Geral das Variáveis de Resíduos Plásticos por País',
+                      xaxis_title='Países',
+                      yaxis_title='Valores',
+                      height=800,  # Ajuste de altura
+                      width=1200,  # Ajuste de largura
+                      title_font_size=20,
+                      xaxis_title_font_size=15,
+                      yaxis_title_font_size=15,
+                      xaxis=dict(
+                          tickfont=dict(size=10),  # Ajustar o tamanho das etiquetas do eixo x
+                          title_standoff=60       # Ajustar a distância do título do eixo x
+                      )
+                     )
+    
+    fig.show()
+
+def main(url):
+    df = carregar_dados(url)
+    if df is not None:
+        numeric_columns = listar_variaveis_numericas(df)
+        if len(numeric_columns) > 2:
+            cols = random.sample(list(numeric_columns), 3)
+            plot_grafico_de_dispersao_3d(df, cols)
+            gerar_relatorio_dispersao(df, cols)
+        else:
+            print("Não há três variáveis numéricas para plotar o gráfico de dispersão 3D.")
+        
+        categorical_columns = listar_variaveis_categoricas(df)
+        if len(categorical_columns) > 0:
+            col_categorica = random.choice(categorical_columns)
+            col_numerica = random.choice(numeric_columns)
+            plot_grafico_de_barras_interativo(df, col_categorica, col_numerica)
+            
+            # Verificar se a coluna escolhida está presente para gerar o mapa
+            if col_numerica in df.columns:
+                gerar_mapa_interativo(df, col_numerica)
+                gerar_relatorio_mapa(col_numerica)
+            else:
+                print(f"A coluna '{col_numerica}' não foi encontrada no conjunto de dados.")
+            
+        else:
+            print("Não há variáveis categóricas para plotar o gráfico de barras.")
+            
+        # Plotar gráfico de barras empilhadas
+        plot_grafico_completo(df)
+
+# URL do arquivo de dados
+url = "https://drive.google.com/file/d/15Rm-r_Nv73iZvFS2bNRNoTuf2E5eyLKM/view?usp=drive_link"
+
+# Executar a análise de dados
+main(url)
